@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"time"
 
 	pb "github.com/RogueAlmond70/Muzz/explorepb"
@@ -36,5 +38,44 @@ func main() {
 		RecipientUserId: "1",
 	}
 
-	likedYou := c.ListLikedYou(ctx)
+	putdecisionrequest := pb.PutDecisionRequest{
+		ActorUserId:     "1",
+		RecipientUserId: "2",
+		LikedRecipient:  false,
+	}
+
+	likedYou, err := c.ListLikedYou(ctx, &likedYouRequest)
+	if err != nil {
+		fmt.Errorf("error sending liked you request: %v", err)
+		os.Exit(1)
+	}
+	for _, y := range likedYou.Likers {
+		fmt.Println(y.GetActorId())
+	}
+
+	newlikedYou, err := c.ListNewLikedYou(ctx, &newLikedYouRequest)
+	if err != nil {
+		fmt.Errorf("error sending new liked you request: %v", err)
+		os.Exit(1)
+	}
+	for _, y := range newlikedYou.Likers {
+		fmt.Println(y.GetActorId())
+	}
+
+	countLikedYou, err := c.CountLikedYou(ctx, &countLikedYouRequest)
+	if err != nil {
+		fmt.Errorf("error sending count liked you request: %v", err)
+		os.Exit(1)
+	}
+	fmt.Println("You have %v likes!", countLikedYou.Count)
+
+	putDecisionResponse, err := c.PutDecision(ctx, &putdecisionrequest)
+	if err != nil {
+		fmt.Errorf("error sending out decision request: %v", err) // Log this err and the other errors.
+		os.Exit(1)
+	}
+
+	mutualMatch := putDecisionResponse.GetMutualLikes()
+	fmt.Println("Mutual match with user: %v", mutualMatch)
+
 }
