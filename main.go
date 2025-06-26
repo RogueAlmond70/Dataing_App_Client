@@ -15,15 +15,19 @@ import (
 func main() {
 	conn, err := grpc.NewClient("localhost:9001", grpc.WithTransportCredentials(insecure.NewCredentials())) // Change this to secure with TLS
 	if err != nil {
-
 		log.Fatalf("failed to connect to grpc server: %v", err)
 	}
+	fmt.Println("connection created")
+
 	defer conn.Close()
+
 	c := pb.NewExploreServiceClient(conn)
+	fmt.Println("Client created")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second) // Times out after a second.
 	defer cancel()
 
+	fmt.Println("context and cancel created")
 	likedYouRequest := pb.ListLikedYouRequest{
 		RecipientUserId: "1",
 		//pagination_token: "2",   This is optional, but look into it.
@@ -44,11 +48,16 @@ func main() {
 		LikedRecipient:  false,
 	}
 
+	fmt.Println("all requests created")
+
 	likedYou, err := c.ListLikedYou(ctx, &likedYouRequest)
 	if err != nil {
-		fmt.Errorf("error sending liked you request: %v", err)
+		fmt.Println(fmt.Errorf("error sending liked you request: %v", err))
 		os.Exit(1)
 	}
+
+	fmt.Println("likedYou request sent successfully")
+
 	for _, y := range likedYou.Likers {
 		fmt.Println(y.GetActorId())
 	}
@@ -67,7 +76,7 @@ func main() {
 		fmt.Errorf("error sending count liked you request: %v", err)
 		os.Exit(1)
 	}
-	fmt.Println("You have %v likes!", countLikedYou.Count)
+	fmt.Printf("You have %v likes!", countLikedYou.Count)
 
 	putDecisionResponse, err := c.PutDecision(ctx, &putdecisionrequest)
 	if err != nil {
@@ -76,6 +85,6 @@ func main() {
 	}
 
 	mutualMatch := putDecisionResponse.GetMutualLikes()
-	fmt.Println("Mutual match with user: %v", mutualMatch)
+	fmt.Printf("Mutual match with user: %v", mutualMatch)
 
 }
